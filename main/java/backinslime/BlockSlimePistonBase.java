@@ -109,7 +109,7 @@ public class BlockSlimePistonBase extends BlockPistonBase{
         		if(getPushableBlocks(world, x+Facing.offsetsXForSide[side]*2, y+Facing.offsetsYForSide[side]*2, z+Facing.offsetsZForSide[side]*2, Facing.oppositeSide[side], Facing.oppositeSide[side], x+Facing.offsetsXForSide[side], y+Facing.offsetsYForSide[side], z+Facing.offsetsZForSide[side]) == 0){
         			world.setBlockToAir(x + Facing.offsetsXForSide[side], y + Facing.offsetsYForSide[side], z + Facing.offsetsZForSide[side]);
         		}else{
-                   pushBlocks(world, x, y, z, Facing.oppositeSide[side], false);
+                   pushBlocks(world, Facing.oppositeSide[side], false);
         		}
         	}
             world.playSoundEffect((double)x + 0.5D, (double)y + 0.5D, (double)z + 0.5D, "tile.piston.in", 0.5F, world.rand.nextFloat() * 0.15F + 0.6F);
@@ -117,7 +117,7 @@ public class BlockSlimePistonBase extends BlockPistonBase{
         }else if(extend == 1){
         	clearBlockLists();
         	getPushableBlocks(world, x+Facing.offsetsXForSide[side], y+Facing.offsetsYForSide[side], z+Facing.offsetsZForSide[side], Facing.oppositeSide[side], side, x, y, z);
-    		pushBlocks(world, x, y, z, side, true);
+    		pushBlocks(world, side, true);
 			world.setBlock(x + Facing.offsetsXForSide[side], y + Facing.offsetsYForSide[side], z + Facing.offsetsZForSide[side], Blocks.piston_extension, side | (this.isSticky ? 8 : 0), 4);
             world.setTileEntity(x + Facing.offsetsXForSide[side], y + Facing.offsetsYForSide[side], z + Facing.offsetsZForSide[side], BlockPistonMoving.getTileEntity(BIS.slimePistonHead, side | (this.isSticky ? 8 : 0), side, true, false));
             //world.notifyBlocksOfNeighborChange(x + Facing.offsetsXForSide[side], y + Facing.offsetsYForSide[side], z + Facing.offsetsZForSide[side], BIS.slimePistonHead);
@@ -199,45 +199,56 @@ public class BlockSlimePistonBase extends BlockPistonBase{
      * Pushes all blocks in the pushedBlocks list and pushingBlocks list.
      * Also launches entities if needed
      * @param world World
-     * @param x X-coordinate of piston pushing
-     * @param y Y-coordinate of piston pushing
-     * @param z Z-coordinate of piston pushing
      * @param side Side the block is moving towards.
      * @param extending Whether the piston is extending or retracting
      */
-    private void pushBlocks(World world, int x, int y, int z, int side, boolean extending){
+    private void pushBlocks(World world, int side, boolean extending){
     	int oldBlockX;
     	int oldBlockY;
     	int oldBlockZ;
-    	int newBlockX;
-    	int newBlockY;
-    	int newBlockZ;
+    	
+    	boolean needsPusher;
+    	int blockX;
+    	int blockY;
+    	int blockZ;
     	int blockMeta;
+    	int[] rearCoords;
     	Block block;
+    	List<int[]> removedBlockCoords = new ArrayList<int[]>();
   
-    	for(int i=0; i<pushedBlockList.size(); ++i){	
-    		block = pushedBlockList.get(i);
-    		oldBlockX=pushedBlockData.get(i)[0];
-    		oldBlockY=pushedBlockData.get(i)[1];
-    		oldBlockZ=pushedBlockData.get(i)[2];
+    	for(int i=0; i<pushedBlockList.size(); ++i){
+    		needsPusher = true;
+    		block = pushedBlockList.get(i);  
+    		blockX = pushedBlockData.get(i)[0];
+    		blockY = pushedBlockData.get(i)[1];
+    		blockZ = pushedBlockData.get(i)[2];
+    		blockMeta = pushedBlockData.get(i)[3];
+    		rearCoords = new int[] {blockX - Facing.offsetsXForSide[side], blockY - Facing.offsetsYForSide[side], blockZ - Facing.offsetsZForSide[side]};
     		
-    		newBlockX=oldBlockX + Facing.offsetsXForSide[side];
-    		newBlockY=oldBlockY + Facing.offsetsYForSide[side];
-    		newBlockZ=oldBlockZ + Facing.offsetsZForSide[side];
-    		blockMeta=pushedBlockData.get(i)[3];
+    		for(int j=0; j<pushedBlockData.size(); ++j){
+    			if(rearCoords[0] == pushedBlockData.get(j)[0] && rearCoords[1] == pushedBlockData.get(j)[1] && rearCoords[2] == pushedBlockData.get(j)[2]){
+        			needsPusher=false;
+        		}
+    		}
+    		if(needsPusher){
+	    		removedBlockCoords.add(pushedBlockData.get(i));
+	    	}
     		
+    		blockX += Facing.offsetsXForSide[side];
+    		blockY += Facing.offsetsYForSide[side];
+    		blockZ += Facing.offsetsZForSide[side];
     		if(block.getMobilityFlag() == 1){
     			float chance = block instanceof BlockSnow ? -1.0f : 1.0f;
-    			block.dropBlockAsItemWithChance(world, newBlockX, newBlockY, newBlockZ, blockMeta, chance, 0);
-    			world.setBlockToAir(newBlockX, newBlockY, newBlockZ);
+    			block.dropBlockAsItemWithChance(world, blockX, blockY, blockZ, blockMeta, chance, 0);
+    			world.setBlockToAir(blockX, blockY, blockZ);
     		}else{
-	    		world.setBlock(newBlockX, newBlockY, newBlockZ, Blocks.piston_extension, blockMeta, 4);
-	            world.setTileEntity(newBlockX, newBlockY, newBlockZ, BlockPistonMoving.getTileEntity(block, blockMeta, side, true, false));
-	            world.notifyBlocksOfNeighborChange(newBlockX, newBlockY, newBlockZ, block);
+	    		world.setBlock(blockX, blockY, blockZ, Blocks.piston_extension, blockMeta, 4);
+	            world.setTileEntity(blockX, blockY, blockZ, BlockPistonMoving.getTileEntity(block, blockMeta, side, true, false));
+	            world.notifyBlocksOfNeighborChange(blockX, blockY, blockZ, block);
     		}
 
-            if(extending){
-            	Iterator entityIterator=world.getEntitiesWithinAABBExcludingEntity(null, this.getCollisionBoundingBoxFromPool(world, newBlockX, newBlockY, newBlockZ)).iterator();
+            if(extending && block.equals(BIS.slimeBlock)){
+            	Iterator entityIterator=world.getEntitiesWithinAABBExcludingEntity(null, this.getCollisionBoundingBoxFromPool(world, blockX, blockY, blockZ)).iterator();
             	Entity entity;
             	while(entityIterator.hasNext()){
             		entity=(Entity) entityIterator.next();
@@ -246,24 +257,6 @@ public class BlockSlimePistonBase extends BlockPistonBase{
             		entity.motionZ += Facing.offsetsZForSide[side]*.5;
             	}
             }
-    	}
-    	
-    	List<int[]> removedBlockCoords = new ArrayList<int[]>();
-    	for(int i=0; i<pushedBlockList.size(); ++i){
-            boolean needsPusher = true;
-    		oldBlockX=pushedBlockData.get(i)[0];
-    		oldBlockY=pushedBlockData.get(i)[1];
-    		oldBlockZ=pushedBlockData.get(i)[2];
-    		blockMeta=pushedBlockData.get(i)[3];
-            int[] rearData = new int[] {oldBlockX - Facing.offsetsXForSide[side], oldBlockY - Facing.offsetsYForSide[side], oldBlockZ - Facing.offsetsZForSide[side], blockMeta};
-            for(int j=0; j<pushedBlockList.size(); ++j){
-            	if(Arrays.equals(pushedBlockData.get(j), rearData)){
-        			needsPusher=false;
-        		}
-            }            
-	    	if(needsPusher){
-	    		removedBlockCoords.add(new int[] {oldBlockX, oldBlockY, oldBlockZ});
-	    	}
     	}
     	
     	for(int[] blockCoords : removedBlockCoords){
