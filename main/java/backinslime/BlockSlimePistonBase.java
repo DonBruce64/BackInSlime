@@ -42,12 +42,6 @@ public class BlockSlimePistonBase extends BlockPistonBase{
             this.updatePistonState(world, x, y, z);
         }
     }
-
-    public void onBlockAdded(World world, int x, int y, int z){
-        if(!world.isRemote && world.getTileEntity(x, y, z) == null){
-            this.updatePistonState(world, x, y, z);
-        }
-    }
     
 	private boolean isIndirectlyPowered(World world, int x, int y, int z, int metadata){
 		return metadata != 0 && world.getIndirectPowerOutput(x, y - 1, z, 0) ? true : (metadata != 1 && world.getIndirectPowerOutput(x, y + 1, z, 1) ? true : (metadata != 2 && world.getIndirectPowerOutput(x, y, z - 1, 2) ? true : (metadata != 3 && world.getIndirectPowerOutput(x, y, z + 1, 3) ? true : (metadata != 5 && world.getIndirectPowerOutput(x + 1, y, z, 5) ? true : (metadata != 4 && world.getIndirectPowerOutput(x - 1, y, z, 4) ? true : (world.getIndirectPowerOutput(x, y, z, 0) ? true : (world.getIndirectPowerOutput(x, y + 2, z, 1) ? true : (world.getIndirectPowerOutput(x, y + 1, z - 1, 2) ? true : (world.getIndirectPowerOutput(x, y + 1, z + 1, 3) ? true : (world.getIndirectPowerOutput(x - 1, y + 1, z, 4) ? true : world.getIndirectPowerOutput(x + 1, y + 1, z, 5)))))))))));
