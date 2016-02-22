@@ -140,12 +140,32 @@ public class BlockSlimePistonBase extends BlockPistonBase{
         int pushedBlockZ=z;
         int pushedBlockMeta=world.getBlockMetadata(pushedBlockX, pushedBlockY, pushedBlockZ);
         int blocksPushed = 0;
-        while(blocksPushed < 13){
+        
+        while(blocksPushed < 13){        	
         	if(pushedBlock.isAir(world, pushedBlockX, pushedBlockY, pushedBlockZ)){
             	return blocksPushed;
             }else if(pushedBlockY <= 0 || pushedBlockY >= world.getHeight()){
                 return 13;
-            }else if(pushedBlock.equals(BIS.slimeBlock)){
+            }else if(!canPushBlock(pushedBlock, world, pushedBlockX, pushedBlockY, pushedBlockZ, side, side)){
+            	if(pushedBlockX==pistonX && pushedBlockY==pistonY && pushedBlockZ==pistonZ){
+            		return blocksPushed;
+            	}else{
+            		return 13;
+            	}
+            }
+        	
+        	int[] pushedBlockCoords = new int[] {pushedBlockX, pushedBlockY, pushedBlockZ, pushedBlockMeta};
+        	for(int i=0; i<pushedBlockData.size(); ++i){
+        		if(Arrays.equals(pushedBlockData.get(i), pushedBlockCoords)){
+        			return blocksPushed;
+        		}
+        	}
+        	
+            ++blocksPushed;
+            pushedBlockList.add(pushedBlock);
+            pushedBlockData.add(pushedBlockCoords);
+            
+            if(pushedBlock.equals(BIS.slimeBlock)){
         		for(int i=0; i<6; ++i){
         			if(i != side && i != ignoreSide){
 	        			int attachedX=pushedBlockX+Facing.offsetsXForSide[i];
@@ -163,23 +183,8 @@ public class BlockSlimePistonBase extends BlockPistonBase{
 	    				}
         			}
         		}
-            }else if(!canPushBlock(pushedBlock, world, pushedBlockX, pushedBlockY, pushedBlockZ, side, side)){
-            	if(pushedBlockX==pistonX && pushedBlockY==pistonY && pushedBlockZ==pistonZ){
-            		return blocksPushed;
-            	}else{
-            		return 13;
-            	}
             }
-        	int[] pushedBlockCoords = new int[] {pushedBlockX, pushedBlockY, pushedBlockZ, pushedBlockMeta};
-        	for(int i=0; i<pushedBlockData.size(); ++i){
-        		if(Arrays.equals(pushedBlockData.get(i), pushedBlockCoords)){
-        			return blocksPushed;
-        		}
-        	}
-            ++blocksPushed;
-            pushedBlockList.add(pushedBlock);
-            pushedBlockData.add(pushedBlockCoords);
-        	
+            
         	pushedBlockX += Facing.offsetsXForSide[side];
             pushedBlockY += Facing.offsetsYForSide[side];
             pushedBlockZ += Facing.offsetsZForSide[side];
@@ -209,6 +214,7 @@ public class BlockSlimePistonBase extends BlockPistonBase{
     	int[] rearCoords;
     	Block block;
     	List<int[]> removedBlockCoords = new ArrayList<int[]>();
+    	List<Entity> launchedEntityList = new ArrayList<Entity>();
   
     	for(int i=0; i<pushedBlockList.size(); ++i){
     		needsPusher = true;
@@ -243,14 +249,19 @@ public class BlockSlimePistonBase extends BlockPistonBase{
 
             if(extending && block.equals(BIS.slimeBlock)){
             	Iterator entityIterator=world.getEntitiesWithinAABBExcludingEntity(null, this.getCollisionBoundingBoxFromPool(world, blockX, blockY, blockZ)).iterator();
-            	Entity entity;
             	while(entityIterator.hasNext()){
-            		entity=(Entity) entityIterator.next();
-            		entity.motionX += Facing.offsetsXForSide[side]*.5;
-            		entity.motionY += Facing.offsetsYForSide[side]*.5;
-            		entity.motionZ += Facing.offsetsZForSide[side]*.5;
+            		Entity entity = (Entity) entityIterator.next();
+            		if(!launchedEntityList.contains(entity)){
+            			launchedEntityList.add(entity);
+            		}
             	}
             }
+    	}
+    	
+    	for(Entity entity : launchedEntityList){
+    		entity.motionX += Facing.offsetsXForSide[side];
+    		entity.motionY += Facing.offsetsYForSide[side];
+    		entity.motionZ += Facing.offsetsZForSide[side];
     	}
     	
     	for(int[] blockCoords : removedBlockCoords){
