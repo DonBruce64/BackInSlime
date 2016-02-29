@@ -259,9 +259,9 @@ public class BlockSlimePistonBase extends BlockPistonBase{
     	}
     	
     	for(Entity entity : launchedEntityList){
-    		entity.motionX += Facing.offsetsXForSide[side];
-    		entity.motionY += Facing.offsetsYForSide[side];
-    		entity.motionZ += Facing.offsetsZForSide[side];
+    		entity.motionX += Facing.offsetsXForSide[side]*1.1F;
+    		entity.motionY += Facing.offsetsYForSide[side]*1.1F;
+    		entity.motionZ += Facing.offsetsZForSide[side]*1.1F;
     	}
     	
     	for(int[] blockCoords : removedBlockCoords){
