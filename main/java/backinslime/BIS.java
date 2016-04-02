@@ -13,7 +13,7 @@ import cpw.mods.fml.common.registry.GameRegistry;
 public class BIS {
 	public static final String MODID="bis";
 	public static final String MODNAME="Back in Slime Mod";
-	public static final String MODVER="3.1.5";
+	public static final String MODVER="3.1.6";
 	
 	public static final BlockSlime slimeBlock = new BlockSlime();
 	public static final BlockSlimePistonBase slimePiston = new BlockSlimePistonBase(false);

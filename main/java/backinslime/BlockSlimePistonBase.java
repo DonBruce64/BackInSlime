@@ -141,10 +141,10 @@ public class BlockSlimePistonBase extends BlockPistonBase{
         int pushedBlockMeta=world.getBlockMetadata(pushedBlockX, pushedBlockY, pushedBlockZ);
         int blocksPushed = 0;
         
-        while(blocksPushed < 13){        	
+        while(blocksPushed < 13){   
         	if(pushedBlock.isAir(world, pushedBlockX, pushedBlockY, pushedBlockZ)){
             	return blocksPushed;
-            }else if(pushedBlockY <= 0 || pushedBlockY >= world.getHeight()){
+            }else if((pushedBlockY == 0 && side == 0) || (pushedBlockY >= world.getHeight() - 1 && side == 1)){
                 return 13;
             }else if(!canPushBlock(pushedBlock, world, pushedBlockX, pushedBlockY, pushedBlockZ, side, side)){
             	if(pushedBlockX==pistonX && pushedBlockY==pistonY && pushedBlockZ==pistonZ){
